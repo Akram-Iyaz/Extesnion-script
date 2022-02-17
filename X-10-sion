@@ -1,0 +1,72 @@
+#!/bin/bash
+
+
+# Script By AKRAM BHAT
+
+
+
+dirName=$(($RANDOM$RANDOM))
+
+check () {
+  version=$(jq --version)
+  if [ -z "$version" ];then  
+    clear
+    echo "jq not installed"
+    sleep 1s
+    echo "exiting in 5 seconds"
+    sleep 5s
+    exit 1
+  fi
+}
+
+
+task1 () { #task 1 is responsible for searching the uuid, renaming the directory etc
+  echo "Enter the location where you have downloaded the extension, \".\" for current directory"
+  read location
+  cd $location
+  echo "Extension .zip folder name ? "
+  read zipname
+  mkdir $dirName
+  unzip -q $zipname -d $dirName 
+  clear
+  jq '.uuid' $dirName/metadata.json
+  echo "Copy the value within \" \" : "
+  sleep 3s
+  echo "Enter the value, you copied: "
+  read uuid
+  clear
+  mv $dirName $uuid 
+}
+
+mainjob () {
+  sudo cp $uuid -r ~/.local/share/gnome-shell/extensions
+  sudo chmod 664 ~/.local/share/gnome-shell/extensions/$uuid/metadata.json
+}
+
+no () {
+  disMan=$(cat /etc/X11/default-display-manager)
+  sudo systemctl stop $disMan
+  sudo systemctl start $disMan
+} 
+
+ask () {
+  echo "Would you like to restart Gnome manually: y/n "
+  read answer
+  if $answer -eq "y";then
+   echo "Only works with Xorg.." 
+   echo "Press 'Alt+F2' and type 'r' , then press Enter"
+  else
+    no
+  fi
+}
+
+deleteOrignal () {
+  rm -r $zipname $uuid
+}
+
+
+check
+task1
+mainjob
+ask
+deleteOrignal
